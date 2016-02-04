@@ -1,4 +1,4 @@
-#!/usr/bin/runhaskell
+#!/usr/bin/env runhaskell
 import System.Environment (getArgs)
 import System.FilePath.Posix
 import Data.List (intersperse, intercalate, isPrefixOf)
