@@ -1,4 +1,5 @@
-#!/usr/bin/env runhaskell
+module Gentest ( genTestFile ) where
+
 import System.Environment (getArgs)
 import System.FilePath.Posix
 import Data.List (intersperse, intercalate, isPrefixOf)
@@ -38,8 +39,8 @@ genTest src namespaces = intercalate "\n" res
                 ] ++ nsUsings ++
                 [ "", centeredTag "Tests", "\n"]
 
-genFile :: FilePath -> IO ()
-genFile f = do
+genTestFile :: FilePath -> IO ()
+genTestFile f = do
     contents <- readFile f
     let ns = namespaces (lines contents)
     let testContents = genTest f ns
@@ -50,4 +51,4 @@ genFile f = do
 
 main = do
     args <- getArgs
-    mapM_ genFile args
+    mapM_ genTestFile args

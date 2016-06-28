@@ -2,3 +2,4 @@
 *.ho
 *.o
 gentest
+.stack-work
