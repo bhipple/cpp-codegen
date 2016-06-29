@@ -10,12 +10,14 @@ data Command = Test FilePath
              | Cpp Namespace FilePath
 
 parser :: Parser Command
-parser =
-      Test <$> (subcommand "test" "Generate a Google Test skeleton for file"
-                (argPath "cppFile" "File to generate test file for"))
-  <|> undefined
-  -- <|> Cpp <$> (subcommand "cpp" "Generate a cpp|h pair"
-                --(argText "namespace" "cpp|h namespace" <*> argPath "fname" "cpp|h Filename"))
+parser = subcommand "test" "Generate a Google Test skeleton for file"
+                    (Test <$> argPath "cppFile" "Cpp|h file which needs test file")
+    <|> parseCpp
+
+parseCpp :: Parser Command
+parseCpp = subcommand "cpp" "Generate a cpp|h pair"
+            (Cpp <$> argText "namespace" "cpp|h namespace"
+                 <*> argPath "fname" "cpp|h filename")
 
 main = do
     cmd <- options "Scripts for generating cpp skeletons" parser
@@ -23,4 +25,4 @@ main = do
 
 genFile :: Command -> IO ()
 genFile (Test cpp) = genTestFile . unpack . format fp $ cpp
-genFile (Cpp ns fp) = undefined
+genFile (Cpp ns file) = genCppHPair ns file

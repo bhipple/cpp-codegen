@@ -22,6 +22,8 @@ library
   build-depends:       turtle
                      , text
                      , filepath
+                     , raw-strings-qq
+                     , HStringTemplate
 
 executable gencpp
   hs-source-dirs:      app
