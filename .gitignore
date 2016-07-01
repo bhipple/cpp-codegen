@@ -1,5 +1,6 @@
 *.hi
 *.ho
 *.o
-gentest
+.hs-tags
 .stack-work
+gentest

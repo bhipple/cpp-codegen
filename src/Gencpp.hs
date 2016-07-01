@@ -2,17 +2,20 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Gencpp ( genCppHPair ) where
 
-import Data.Text hiding (head, drop)
+import Data.Text (Text)
+import qualified Data.Text as T
 import Prelude hiding (FilePath)
 import System.Environment (getArgs)
 import Turtle
 import Text.RawString.QQ
 import Text.StringTemplate
+import Cases (camelize)
+import Data.Char (toUpper)
 
 --  ===========================================================================
 --                              Templates
 --  ===========================================================================
-cppTmpl :: StringTemplate String
+cppTmpl :: StringTemplate Text
 cppTmpl = newSTMP [r|$firstline$
 #include <$filename$.h>
 
@@ -31,7 +34,7 @@ const char LOG_CATEGORY[] = "$logCategory$";
 |]
 
 
-headerTmpl :: StringTemplate String
+headerTmpl :: StringTemplate Text
 headerTmpl = newSTMP [r|$firstline$
 #ifndef $incGuard$
 #define $incGuard$
@@ -51,7 +54,9 @@ class $cname$ {
     //~$cname$() { }
 
   private:
+
 };
+
 }  // close namespace $namespace$
 }  // close enterprise namespace
 
@@ -63,23 +68,31 @@ class $cname$ {
 --  ===========================================================================
 genCppHPair :: Text -> FilePath -> IO ()
 genCppHPair ns fn = do
-    let cpp = cppTmpl
-    let h = headerTmpl
-    let cpp' = setManyAttrib [ ("namespace", ns)
-                             , ("firstline", "WIP-FL")
-                             , ("filename", "WIP-FN")
-                             , ("logCategory", "WIP-LC")
-                             ] cpp
+    let bn = basename fn
+    let cpp = setManyAttrib [ ("namespace", ns)
+                             , ("firstline", firstLine (bn <.> "cpp"))
+                             , ("filename", format fp bn)
+                             , ("logCategory", T.toUpper $ getClassName fn)
+                             ] cppTmpl
 
-    let h' = setManyAttrib [ ("namespace", ns)
-                           , ("firstline", "WIP-FL")
-                           , ("incGuard", "WIP-IG")
-                           , ("cname", "WIP-CN")
-                           ] h
+    let h = setManyAttrib [ ("namespace", ns)
+                          , ("firstline", firstLine (bn <.> "h"))
+                          , ("incGuard", "INCLUDED_" <> (T.toUpper . format fp . basename $ fn))
+                          , ("cname", getClassName fn)
+                          ] headerTmpl
 
-    print $ render cpp'
-    print $ render h'
+    let write name tmpl = output name $ pure $ render tmpl
+    write (fn <.> "cpp") cpp
+    write (fn <.> "h") h
 
 -- Generates the // foo.cpp -*-C++-*- tags
 firstLine :: FilePath -> Text
-firstLine = undefined
+firstLine fn = let pref = "// "
+                   fn' = format fp $ basename fn
+                   tag = "-*-C++-*-"
+                   ws = T.replicate (79 - T.length pref - T.length fn' - T.length tag) " "
+               in pref <> fn' <> ws <> tag
+
+getClassName :: FilePath -> Text
+getClassName fn = let cc = camelize . format fp . basename $ fn
+                  in T.cons (toUpper . T.head $ cc) $ T.tail cc
